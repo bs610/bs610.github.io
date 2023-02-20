@@ -1,0 +1,157 @@
+
+
+
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>GVOC live results</title>
+      <link href='bootstrap.min.css' rel='stylesheet'>
+      <meta name='viewport' content='width=device-width, initial-scale=1'>
+      <script type="text/javascript">
+        function show(link) {
+          if (!document.getElementById(link)) {return;}
+
+            document.getElementById("Stage-1---QE-Park").style.display = "none";
+            document.getElementById("Stage-2---Jericho").style.display = "none";
+            document.getElementById("Stage-3---UBC-Head-to-Head").style.display = "none";
+            document.getElementById("Stage-4---UBC-Setup").style.display = "none";
+            document.getElementById("Stage-5---UBC-Chase").style.display = "none";
+            document.getElementById("Best-4-of-5").style.display = "none";
+
+          document.getElementById(link).style.display = "block";
+        }
+        
+        function parseUrlParams() {
+          var vars = {}, hash;
+          var hashes = window.location.href.slice(window.location.href.indexOf('#') + 1).split('&');
+          for(var i = 0; i < hashes.length; i++) {
+            hash = hashes[i].split('=');
+            vars[hash[0]] = hash[1];
+            
+            if (i == 0) show(hash[0].split("_")[0]);
+          }
+        }
+      </script>
+    </head>
+    <body onload="parseUrlParams();">
+      <div class='container-fluid'>
+
+          <a name="Stage-1---QE-Park_Top"></a>
+          <a name="Stage-2---Jericho_Top"></a>
+          <a name="Stage-3---UBC-Head-to-Head_Top"></a>
+          <a name="Stage-4---UBC-Setup_Top"></a>
+          <a name="Stage-5---UBC-Chase_Top"></a>
+          <a name="Best-4-of-5_Top"></a>
+
+        <div class='row'><div class='col-xs-12'>
+            <img src='logo-sc2023.png' class='img-responsive' style='max-width:min(100%,750px); margin-bottom:20px;'>
+          <h2>Sprint Camp 2023 Live Results</h2>
+
+
+          
+          
+            <a class='btn btn-primary' href='#Stage-1---QE-Park_Top' onclick="show('Stage-1---QE-Park')" style='margin-bottom:5px'>Stage 1 - QE Park</a>
+          
+          
+            <a class='btn btn-primary' href='#Stage-2---Jericho_Top' onclick="show('Stage-2---Jericho')" style='margin-bottom:5px'>Stage 2 - Jericho</a>
+          
+          
+            <a class='btn btn-primary' href='#Stage-3---UBC-Head-to-Head_Top' onclick="show('Stage-3---UBC-Head-to-Head')" style='margin-bottom:5px'>Stage 3 - UBC Head-to-Head</a>
+          
+          
+            <a class='btn btn-primary' href='#Stage-4---UBC-Setup_Top' onclick="show('Stage-4---UBC-Setup')" style='margin-bottom:5px'>Stage 4 - UBC Setup</a>
+          
+          
+            <a class='btn btn-primary' href='#Stage-5---UBC-Chase_Top' onclick="show('Stage-5---UBC-Chase')" style='margin-bottom:5px'>Stage 5 - UBC Chase</a>
+          
+          
+            <a class='btn btn-success' href='#Best-4-of-5_Top' onclick="show('Best-4-of-5')" style='margin-bottom:5px'>Best 4 of 5</a>
+        <br>
+
+
+  
+  
+  
+  
+
+  <div class='event' "" id='Stage-1---QE-Park'><h3>Stage 1 - QE Park</h3>
+
+  
+    No results yet
+  
+  
+  </div>
+
+  
+  
+  
+  
+
+  <div class='event'  style='display:none'  id='Stage-2---Jericho'><h3>Stage 2 - Jericho</h3>
+
+  
+    No results yet
+  
+  
+  </div>
+
+  
+  
+  
+  
+
+  <div class='event'  style='display:none'  id='Stage-3---UBC-Head-to-Head'><h3>Stage 3 - UBC Head-to-Head</h3>
+
+  
+    No results yet
+  
+  
+  </div>
+
+  
+  
+  
+  
+
+  <div class='event'  style='display:none'  id='Stage-4---UBC-Setup'><h3>Stage 4 - UBC Setup</h3>
+
+  
+    No results yet
+  
+  
+  </div>
+
+  
+  
+  
+  
+
+  <div class='event'  style='display:none'  id='Stage-5---UBC-Chase'><h3>Stage 5 - UBC Chase</h3>
+
+  
+    No results yet
+  
+  
+  </div>
+
+  
+  
+  
+  
+
+  <div class='event'  style='display:none'  id='Best-4-of-5'><h3>Best 4 of 5</h3>
+
+  
+      No results yet
+  
+  
+  </div>
+
+
+
+
+          </div>
+        </div>
+      </div>
+    </body>
+  </html>
