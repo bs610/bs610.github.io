@@ -18,6 +18,7 @@
   </style>
 
       
+  <script src="https://cdn.plot.ly/plotly-3.4.0.min.js" charset="utf-8"></script>
   <script>
     var show_splits = false;
 
@@ -36,6 +37,303 @@
       }
 
       set_cookie("show_splits", show_splits ? "1" : "0");
+    }
+
+    function toggle_graph(prefix) {
+      let elem = document.getElementById("graph_" + prefix);
+      let btn = document.getElementById("graph_btn_" + prefix);
+
+      if (elem.style.display != "none") {
+        // Hide graph
+        elem.style.display = "none";
+        btn.innerText = "Show graph";
+        return;
+      } else if (elem.innerHTML != "") {
+        // Show graph that was already generated
+        elem.style.display = "block";
+        btn.innerText = "Hide graph";
+        return;
+      }
+
+      // Generate graph selector
+      let data = JSON.parse(document.getElementById("graph_data_" + prefix).innerText);
+      let html = "";
+
+      let runner_names = [];
+
+      for (let i in data) {
+        let runner = data[i];
+        runner_names.push(runner["name"]);
+      }
+
+      let num_name_cols = 4;
+      html += '<table><tr>';
+      for (let r in runner_names) {
+        if (r % num_name_cols == 0 && r > 0) {
+          html += "</tr><tr>"
+        }
+        let cb_id = 'cb_' + r + '_' + prefix;
+        let cb_cl = 'cb_' + prefix;
+        let checked = r < 5 ? "checked" : ""
+        html += '<td><label for="' + cb_id + '"><input type="checkbox" ' + checked + ' class="' + cb_cl + '" id="' + cb_id + '" data-runner-id="' + r + '" onchange="update_graph(\'' + prefix + '\')">' + runner_names[r] + '</label></td>';
+      }
+      html += '</tr>';
+      html += '<tr><td colspan="' + num_name_cols + '"><div id="plotly_' + prefix + '">';
+      html += '</div></td></tr></table>';
+
+      elem.style.display = "block";
+      btn.innerText = "Hide graph";
+      elem.innerHTML = html;
+
+      update_graph(prefix);
+    }
+
+    function update_graph(prefix) {
+      let cbs = document.getElementsByClassName("cb_" + prefix);
+      let runners = [];
+
+      for (let c in cbs) {
+        let cb = cbs[c];
+        if (cb.checked) {
+          runners.push(cb.dataset.runnerId);
+        }
+      }
+
+      let data = JSON.parse(document.getElementById("graph_data_" + prefix).innerText);
+
+      let leader_splits = remove_bonus_punches(data[0]["punches"], null);
+      let x_vals = [0];
+      let x_labels = ["S"];
+      let leader_punch_order = [];
+
+      for (let p = 0; p < leader_splits.length; p++) {
+        let code = leader_splits[p]["code"];
+        if (p == leader_splits.length - 1) {
+          x_labels.push("F");
+        } else {
+          x_labels.push((p + 1) + " [" + code + "]");
+        }
+        x_vals.push(p+1);
+        leader_punch_order.push(code);
+      }
+
+      let plot_data = [];
+
+      for (let r in runners) {
+        let runner_idx = runners[r];
+        let splits = data[runner_idx]["punches"];
+        let ordered_splits = reorder_splits(splits, leader_punch_order);
+
+        let y_vals = [0]; // Everyone starts at 0
+        let y_texts = ["start"];
+
+        for (let p in ordered_splits) {
+          if (ordered_splits[p]["elapsed_secs"] != null && leader_splits[p]["elapsed_secs"] != null) {
+            let diff = leader_splits[p]["elapsed_secs"] - ordered_splits[p]["elapsed_secs"];
+            let diff_pos = -1 * diff;
+            y_vals.push(diff);
+
+            if (runner_idx == 0) {
+              y_texts.push("winner");
+            } else if (diff < -60) {
+              y_texts.push(Math.floor(diff_pos/60) + "m" + (diff_pos%60) + "s behind");
+            } else if (diff < 0) {
+              y_texts.push(diff_pos + "s behind");
+            } else if (diff > 60) {
+              y_texts.push(Math.floor(diff/60) + "m" + (diff%60) + "s ahead");
+            } else {
+              y_texts.push(diff + "s ahead");
+            }
+          } else {
+            y_vals.push(null);
+            y_texts.push("mp");
+          }
+        }
+
+        let this_plot = {  
+          "x": x_vals,
+          "y": y_vals,
+          "name": data[runner_idx]["name"],
+          "type": "scattergl",
+          "mode": "lines+markers",
+          "line": {"width": 0.5},
+          "hovertemplate": "%{text}",
+          "text": y_texts
+        };
+
+        plot_data.push(this_plot);
+      }
+
+      let plot_layout = {
+        "showlegend": true,
+        "uirevision": "1", // change value to force a zoom-out
+        "hovermode": "x unified",
+        "height": 350,
+        "width": 800,
+        "margin": {
+          "l": 60,
+          "r": 10,
+          "b": 60,
+          "t": 10,
+          "pad": 4
+        },
+        "plot_bgcolor": "rgba(0,0,0,0)",
+        "paper_bgcolor": "rgba(0,0,0,0)",
+        "yaxis": {
+          "title": {"text": "Time vs winner (seconds)"},
+          "fixedrange": true
+        },
+        "xaxis": {
+          "title": {"text": ""},
+          "tickmode": "array",
+          "tickvals": x_vals,
+          "ticktext": x_labels,
+          "tickangle": 45,
+          "fixedrange": true
+        },
+        "legend": {
+          "x": 1,
+          "y": 0.5
+        }
+      };
+
+      let plot_config = {"displayModeBar": false, "scrollZoom": false};
+
+      Plotly.react(document.getElementById("plotly_" + prefix), plot_data, plot_layout, plot_config);
+    }
+
+    function remove_bonus_punches(this_runner, leader_order) {
+      let no_bonus_punches = [];
+      let prev_code = "-1";
+      let add_to_next = 0;
+
+      for (let p in this_runner) {
+        let is_extra_control = true;
+
+        if (leader_order === null) {
+          is_extra_control = false;
+        } else {
+          for (let o in leader_order) {
+            if (leader_order[o] == this_runner[p]["code"]) {
+              is_extra_control = false;
+              break;
+            }
+          }
+        }
+
+        if (this_runner[p]["code"] == prev_code || is_extra_control) {
+          add_to_next += this_runner[p]["split_secs"];
+        } else {
+          add_to_next = 0;
+          let new_split = this_runner[p]["split_secs"] == null ? null : this_runner[p]["split_secs"] + add_to_next;
+          no_bonus_punches.push({"code": this_runner[p]["code"], "elapsed_secs": this_runner[p]["elapsed_secs"], "split_secs": new_split})
+        }
+
+        prev_code = this_runner[p]["code"];
+      }
+
+      return no_bonus_punches;
+    }
+
+    function find_hub_controls(leader_order) {
+      let num_visits = {};
+
+      for (let o in leader_order) {
+        let code = leader_order[o];
+
+        if (!num_visits.hasOwnProperty(code)) {
+          num_visits[code] = 1;
+        } else {
+          num_visits[code] += 1;
+        }
+      }
+
+      let hubs = [];
+
+      for (let code in num_visits) {
+        if (num_visits[code] > 1) {
+          hubs.push(code);
+        }
+      }
+
+      return hubs;
+    }
+
+    function find_split(punches, from, to, hubs) {
+      let prev_code = null;
+
+      for (let p in punches) {
+        let this_code = punches[p]["code"];
+
+        if (this_code == to && prev_code == from) {
+          return punches[p]["split_secs"];
+        }
+
+        prev_code = this_code;
+      }
+
+      // We didn't find the split. Might need special logic if
+      // it's the first control of a farsta, for example.
+      prev_code = null;
+
+      if (from === null) {
+        prev_code = null;
+
+        for (let p in punches) {
+          let this_code = punches[p]["code"];
+
+          if (this_code == to && hubs.indexOf(prev_code) != -1) {
+            // Leader went from start to control, but this
+            // runner went from hub to control.
+            return punches[p]["split_secs"];
+          }
+
+          prev_code = this_code;
+        }
+      }
+
+      if (hubs.indexOf(from) != -1 && punches[0]["code"] == to) {
+        // Leader went from hub to control, but this
+        // runner went from start to control.
+        return punches[0]["split_secs"];
+      }
+
+      // We didn't find the split - mispunch
+      return null;
+    }
+
+    function reorder_splits(this_runner, leader_order) {
+      let elapsed = 0;
+      let new_punches = [];
+      let already_missed_punch = false;
+
+      let no_bonus_punches = remove_bonus_punches(this_runner, leader_order);
+      let hubs = find_hub_controls(leader_order);
+
+      let prev_leader_code = null;
+      
+      for (let o in leader_order) {
+        let code = leader_order[o];
+
+        if (already_missed_punch) {
+          new_punches.push({"code": code, "elapsed_secs": null, "split_secs": null});
+          continue;
+        }
+
+        let split = find_split(no_bonus_punches, prev_leader_code, code, hubs);
+
+        if (split === null) {
+          new_punches.push({"code": code, "elapsed_secs": null, "split_secs": null});
+          already_missed_punch = true;
+        } else {
+          elapsed += split;
+          new_punches.push({"code": code, "elapsed_secs": elapsed, "split_secs": split});
+        }
+
+        prev_leader_code = code;
+      }
+
+      return new_punches;
     }
 
     function handle_cookies() {
