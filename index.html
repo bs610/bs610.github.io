@@ -122,7 +122,7 @@
       for (let r in runners) {
         let runner_idx = runners[r];
         let splits = data[runner_idx]["punches"];
-        let disable_hub_logic = (prefix.indexOf("UBC-Final") > 1;
+        let disable_hub_logic = (prefix.indexOf("UBC-Final") > 0);
         let ordered_splits = reorder_splits(splits, leader_punch_order, disable_hub_logic);
 
         let y_vals = [0]; // Everyone starts at 0
