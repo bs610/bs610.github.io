@@ -122,7 +122,8 @@
       for (let r in runners) {
         let runner_idx = runners[r];
         let splits = data[runner_idx]["punches"];
-        let ordered_splits = reorder_splits(splits, leader_punch_order);
+        let disable_hub_logic = (prefix.indexOf("UBC-Final") > 1;
+        let ordered_splits = reorder_splits(splits, leader_punch_order, disable_hub_logic);
 
         let y_vals = [0]; // Everyone starts at 0
         let y_texts = ["start"];
@@ -302,13 +303,17 @@
       return null;
     }
 
-    function reorder_splits(this_runner, leader_order) {
+    function reorder_splits(this_runner, leader_order, disable_hub_logic) {
       let elapsed = 0;
       let new_punches = [];
       let already_missed_punch = false;
 
       let no_bonus_punches = remove_bonus_punches(this_runner, leader_order);
       let hubs = find_hub_controls(leader_order);
+
+      if (disable_hub_logic) {
+        hubs = leader_order;
+      }
 
       let prev_leader_code = null;
       
